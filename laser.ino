@@ -1,3 +1,5 @@
+#include <SoftwareSerial.h>
+
 int laserPin0 = 7;
 int laserPin1 = 8;  
 int laserPin2 = 9;  
@@ -10,9 +12,15 @@ int res2 = 2;
 int res3 = 3;
 int res4 = 4;
 int res5 = 5;
-int sended = -1;
+
+bool sended[5] = {false, false, false, false, false};
+
+
+SoftwareSerial bluetooth(2, 3);
+
 void setup () {   
    Serial.begin(9600);
+   bluetooth.begin(9600);
    pinMode (laserPin0, OUTPUT); 
    pinMode (laserPin1, OUTPUT);  
    pinMode (laserPin2, OUTPUT);  
@@ -27,49 +35,44 @@ void loop () {
   digitalWrite (laserPin3, HIGH); 
   digitalWrite (laserPin4, HIGH);  
   digitalWrite (laserPin5, HIGH); 
-  if (areAllNotChecked()) {
-    sended = -1;
+  
+  for (int i = 0; i < 5; i++) {
+    int value = analogRead(i);
+    Serial.print(value);
+    Serial.print("   ");
   }
-  if (analogRead(res0) > 100) {
-    if (sended != 0) {
-      Serial.println("0");
-      sended = 0;
-    }
+  Serial.println("");
+  
+  if (isSendedEdit()) {
+    setSendedMass();
   }
-  if (analogRead(res1) > 100) {
-    if (sended != 1) {
-      Serial.println("1");
-      sended = 1;
-    }
-  }
-  if (analogRead(res2) > 100) {
-    if (sended != 2) {
-      Serial.println("2");
-      sended = 2;
-    }
-  }
-//   if (analogRead(res3) > 100) {
-//    //if (sended != 3) {
-//      Serial.println("3");
-//      //sended = 3;
-//    //}
-//  }
-//   if (analogRead(res4) > 100) {
-//    //if (sended != 4) {
-//      Serial.println("4");
-//      //sended = 4;
-//    //}
-//  }
-//   if (analogRead(res5) > 100) {
-//    //if (sended != 5) {
-//      Serial.println("5");
-//      //sended = 5;
-//    //}
-//  }
-} 
+}
 
-bool areAllNotChecked() {
-  //TODO write the others
-  return analogRead(res0) <= 100 && analogRead(res1) <= 100 && analogRead(res2) <= 100;
+void setSendedMass() {
+  for (int i = 0; i < 5; i++) {
+    int value = analogRead(i);
+    bool b = i == 3 ? value < 200 : i == 4 ? value < 100 : value > 100;
+    sended[i] = b;
+  }
+  printSended();
+}
+
+bool isSendedEdit() {
+  for (int i = 0; i < 5; i++) {
+    int value = analogRead(i);
+    bool b = i == 3 ? value < 200 : i == 4 ? value < 100 : value > 100;
+    if (sended[i] != b) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void printSended() {
+  for (byte  i = 0; i < 5; i++) {
+    if (sended[i]) {
+      bluetooth.println(String(i));
+    }
+  }
 }
 
